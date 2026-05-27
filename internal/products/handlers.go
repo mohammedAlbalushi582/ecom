@@ -3,7 +3,9 @@ package products
 import (
 	"log"
 	"net/http"
+	"strconv"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/mohammedAlbalushi582/ecom/internal/json"
 )
 
@@ -17,15 +19,24 @@ func NewHandler(service Service) *handler {
 }
 
 func (h *handler) ListProducts(w http.ResponseWriter, r *http.Request) {
-	err := h.service.ListProducts(r.Context())
+	products, err := h.service.ListProducts(r.Context())
 	if err != nil {
 		log.Println(err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
-	products := struct {
-		Products []string `json:"products"`
-	}{}
 
 	json.Write(w, http.StatusOK, products)
+}
+
+func (h *handler) ProductByID(w http.ResponseWriter, r *http.Request) {
+	productIDStr := chi.URLParam(r, "id")
+	productID, err := strconv.ParseInt(productIDStr, 10, 64)
+	product, err := h.service.ProductByID(r.Context(), productID)
+	if err != nil {
+		log.Println(err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+	json.Write(w, http.StatusOK, product)
 }
